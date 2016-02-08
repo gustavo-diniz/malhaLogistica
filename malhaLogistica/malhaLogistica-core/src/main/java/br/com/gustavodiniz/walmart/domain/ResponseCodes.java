@@ -3,7 +3,7 @@ package br.com.gustavodiniz.walmart.domain;
 public class ResponseCodes {
 
 	private String retornoMensagem;
-	private String codigoMensagem;
+	private String response;
 
 	public String getRetornoMensagem() {
 		return retornoMensagem;
@@ -13,12 +13,14 @@ public class ResponseCodes {
 		this.retornoMensagem = retornoMensagem;
 	}
 
-	public String getCodigoMensagem() {
-		return codigoMensagem;
+	public String getResponse() {
+		return response;
 	}
 
-	public void setCodigoMensagem(String codigoMensagem) {
-		this.codigoMensagem = codigoMensagem;
+	public void setResponse(String response) {
+		this.response = response;
 	}
+
+	
 
 }
