@@ -24,4 +24,4 @@ Algoritmo Djikstra <br/>
 Mysql <br/>
 Maven <br/>
 
-Foi escolhida esta arquitetura com foco em simplicidade, pensando na utilização de recursos e frameworks mais básicos para resolver este problema, sempre poderão existir formas mais simples de se desenvolver, mas para efeitos deste teste e pelo tempo, estes foram os recursos e frameworks que me motivarão a escolher esta arquitetura.
+Foi escolhida esta arquitetura com foco em simplicidade, pensando na utilização de recursos e frameworks mais básicos para resolver este problema, sempre poderão existir formas mais simples de se desenvolver, mas para efeitos deste teste e para simplificar, estes foram os recursos e frameworks que me motivarão a escolher esta arquitetura.
