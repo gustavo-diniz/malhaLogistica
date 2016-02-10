@@ -1,5 +1,10 @@
 package br.com.gustavodiniz.walmart.domain;
 
+/**
+ * Classe de representação de respostas para requisições.
+ * @author gustavodinizdossantos
+ *
+ */
 public class ResponseCodes {
 
 	private String retornoMensagem;

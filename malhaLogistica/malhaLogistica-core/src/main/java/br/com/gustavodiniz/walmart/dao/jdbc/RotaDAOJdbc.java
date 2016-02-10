@@ -35,13 +35,17 @@ public class RotaDAOJdbc extends SpringDao implements RotaDAO {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<MalhaLogistica> listarMalhasLogisticas() {
+	public List<MalhaLogistica> listarMalhasLogisticas(String mapa) {
 		
 		StringBuffer sb = new StringBuffer();
-		sb.append("SELECT * FROM TB_MALHA_LOGISTICA ");
+		sb.append("SELECT * FROM TB_MALHA_LOGISTICA WHERE NOME_MALHA = ? ");
 
+		Object[] param = new Object[]{
+				mapa
+		};
+		
 		try{
-			return  getJdbcTemplate().query(sb.toString(), new MalhaLogisticaMapper());
+			return  getJdbcTemplate().query(sb.toString(), param, new MalhaLogisticaMapper());
 		} catch (EmptyResultDataAccessException e){
 			return new ArrayList<MalhaLogistica>();
 		}
@@ -58,6 +62,25 @@ public class RotaDAOJdbc extends SpringDao implements RotaDAO {
 			obj.setDistancia(rs.getInt("DISTANCIA"));
 			
 			return obj;
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<MalhaLogistica> listarMalhasLogisticas(String mapa, String origem, String destino) {
+		StringBuffer sb = new StringBuffer();
+		sb.append("SELECT * FROM TB_MALHA_LOGISTICA WHERE NOME_MALHA = ? AND ORIGEM = ? AND DESTINO = ? ");
+
+		Object[] param = new Object[]{
+				mapa,
+				origem,
+				destino
+		};
+		
+		try{
+			return  getJdbcTemplate().query(sb.toString(), param, new MalhaLogisticaMapper());
+		} catch (EmptyResultDataAccessException e){
+			return new ArrayList<MalhaLogistica>();
 		}
 	}
 

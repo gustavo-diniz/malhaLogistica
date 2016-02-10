@@ -1,5 +1,11 @@
 package br.com.gustavodiniz.walmart.domain;
 
+
+/**
+ * Classe de representação de consulta de rotas
+ * @author gustavodinizdossantos
+ *
+ */
 public class Rotas {
 
 	private String nomeRota;

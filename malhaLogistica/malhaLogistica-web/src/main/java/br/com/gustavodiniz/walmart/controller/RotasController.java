@@ -11,7 +11,6 @@ import com.google.gson.Gson;
 
 import br.com.gustavodiniz.walmart.domain.MalhaLogisticaResponse;
 import br.com.gustavodiniz.walmart.domain.ResponseCodes;
-import br.com.gustavodiniz.walmart.domain.Rotas;
 import br.com.gustavodiniz.walmart.domain.RotasResponse;
 import br.com.gustavodiniz.walmart.service.RotasService;
 
@@ -27,7 +26,7 @@ public class RotasController {
 	@ResponseBody
 	public String consultarMalhaLogistica(@RequestParam(value = "mapa", required=false) String mapa ){
 		
-		MalhaLogisticaResponse response = rotasService.listarMalhasLogisticas();
+		MalhaLogisticaResponse response = rotasService.listarMalhasLogisticas(mapa);
 		String retorno = new Gson().toJson(response, MalhaLogisticaResponse.class); 
 		
 		return retorno;
@@ -40,7 +39,7 @@ public class RotasController {
 										@RequestParam(value = "destino", required=true) String destino,
 										@RequestParam(value = "distancia", required=true) Integer distancia){
 		
-		ResponseCodes response = rotasService.incluirRota(mapa, origem, destino, distancia);
+		ResponseCodes response = rotasService.incluirMalhaLogistica(mapa, origem, destino, distancia);
 		String retorno = new Gson().toJson(response, ResponseCodes.class); 
 		
 		return retorno;
@@ -54,7 +53,7 @@ public class RotasController {
 									 @RequestParam(value = "autonomia", required=true) Double autonomia,
 									 @RequestParam(value = "valLitro", required=true) Double valLitro ){
 		
-		RotasResponse rotas = rotasService.calcularMelhorCaminho(origem, destino, autonomia, valLitro);
+		RotasResponse rotas = rotasService.calcularMelhorCaminhoRota(mapa, origem, destino, autonomia, valLitro);
 		String retorno = new Gson().toJson(rotas, RotasResponse.class); 
 		
 		return retorno;

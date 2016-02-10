@@ -1,5 +1,9 @@
 package br.com.gustavodiniz.walmart.domain;
 
+/**
+ * Classe de representação de resposta para consulta de rotas.
+ * @author gustavodinizdossantos
+ */
 public class RotasResponse {
 
 	private String mensagem;

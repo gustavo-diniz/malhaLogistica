@@ -10,26 +10,29 @@ import br.com.gustavodiniz.walmart.domain.Rotas;
 import br.com.gustavodiniz.walmart.domain.Vertice;
 import br.com.gustavodiniz.walmart.service.CalculoRotasService;
 
-
+/**
+ * Classe de implementação da interface CalculoRotasService
+ * @author gustavodinizdossantos
+ *
+ */
 @Service
 @Transactional
 public class CalculoRotasServiceImpl implements CalculoRotasService {
 
 	@Override
-	public Map<String, Vertice> calcularPossibilidadesDeRota(String startName, Map<String, Vertice> grafo) {
-	      if (!grafo.containsKey(startName)) {
-	         System.err.printf("Grafo a posição inicial: ", startName);
+	public Map<String, Vertice> calcularPossibilidadesDeRota(String origem, Map<String, Vertice> grafo) {
+	      if (!grafo.containsKey(origem)) {
 	         return null;
 	      }
 	      
-	      final Vertice source = grafo.get(startName);
+	      final Vertice verticeOrigem = grafo.get(origem);
 	      NavigableSet<Vertice> q = new TreeSet<>();
 	 
 	      // Configura as vertices
-	      for (Vertice v : grafo.values()) {
-	         v.previous = v == source ? source : null;
-	         v.dist = v == source ? 0 : Integer.MAX_VALUE;
-	         q.add(v);
+	      for (Vertice vertice : grafo.values()) {
+	    	 vertice.anterior = vertice == verticeOrigem ? verticeOrigem : null;
+	    	 vertice.distanciaMaxima = vertice == verticeOrigem ? 0 : Integer.MAX_VALUE;
+	         q.add(vertice);
 	      }
 	 
 	      verificaVerticesMaisProximos(q);
@@ -37,29 +40,38 @@ public class CalculoRotasServiceImpl implements CalculoRotasService {
 	      return grafo;
 	   }
 	   
-	   private void verificaVerticesMaisProximos(final NavigableSet<Vertice> q) {      
-	      Vertice u, v;
-	      while (!q.isEmpty()) {
+	   /**
+	    * Avalia os vertices mais próximos e adiciona na árvore de vértices.
+	    * @param q
+	    */
+	   private void verificaVerticesMaisProximos(final NavigableSet<Vertice> arvoreVertices) {      
+	      Vertice ultimoVertice;
+	      Vertice verticeProximo;
+	      
+	      while (!arvoreVertices.isEmpty()) {
 	 
-	         u = q.pollFirst(); 
-	         if (u.dist == Integer.MAX_VALUE) break; 
+	    	 ultimoVertice = arvoreVertices.pollFirst(); 
+	         if (ultimoVertice.distanciaMaxima == Integer.MAX_VALUE) break; 
 	 
-	         for (Map.Entry<Vertice, Integer> a : u.neighbours.entrySet()) {
-	            v = a.getKey(); //o vertica mais proximo nesta iteração
+	         for (Map.Entry<Vertice, Integer> a : ultimoVertice.verticesProximas.entrySet()) {
+	        	
+	        	//o vertica mais proximo nesta iteração
+	        	verticeProximo = a.getKey(); 
 	 
-	            final int alternateDist = u.dist + a.getValue();
-	            if (alternateDist < v.dist) { //vertice com caminho mais curto encontrado 
-	               q.remove(v);
-	               v.dist = alternateDist;
-	               v.previous = u;
-	               q.add(v);
+	            final int alternateDist = ultimoVertice.distanciaMaxima + a.getValue();
+	            
+	            //vertice com caminho mais curto encontrado 
+	            if (alternateDist < verticeProximo.distanciaMaxima) { 
+	               arvoreVertices.remove(verticeProximo);
+	               verticeProximo.distanciaMaxima = alternateDist;
+	               verticeProximo.anterior = ultimoVertice;
+	               arvoreVertices.add(verticeProximo);
 	            } 
 	         }
 	      }
 	   }
 	   
-	   /** Imprime um caminho a partir da fonte para o vértice especificado */
-	   public Rotas calculaRota(String endName, Double autonomiaVeiculo, Double valLitroCombustivel, Map<String, Vertice> grafo) {
+	   public Rotas calculaRotaComMenorCaminho(String endName, Double autonomiaVeiculo, Double valLitroCombustivel, Map<String, Vertice> grafo) {
 	      if (!grafo.containsKey(endName)) {
 	         System.err.printf("Graph doesn't contain end vertex \"%s\"\n", endName);
 	         return null;
@@ -73,6 +85,14 @@ public class CalculoRotasServiceImpl implements CalculoRotasService {
 	      return r;
 	   }
 	   
+	   /**
+	    * Efetua o cálculo de custo da rota a partir da distância calculado, de acordo com
+	    * a autonomia e valor de combustível.
+	    * @param distancia
+	    * @param autonomia
+	    * @param valLitro
+	    * @return
+	    */
 	   public Double calculaAutonomia(Integer distancia, Double autonomia, Double valLitro){
 		   
 		   if(distancia == null || distancia == 0){

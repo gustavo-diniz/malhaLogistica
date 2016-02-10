@@ -3,11 +3,18 @@ package br.com.gustavodiniz.walmart.domain;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author gustavodinizdossantos
+ */
 public class Grafo {
 
 	private Map<String, Vertice> grafo; 
 	
-	/** Builds a graph from a set of edges */
+	   /**
+	    * Constrói um gráfo a partir de um conjunto de arestas
+	    * @param arestas
+	    * @author gustavodinizdossantos
+	    */
 	   public Grafo(Aresta[] arestas) {
 		   grafo = new HashMap<>(arestas.length);
 	 
@@ -18,8 +25,7 @@ public class Grafo {
 	 
 	      //another pass to set neighbouring vertices
 	      for (Aresta e : arestas) {
-	         grafo.get(e.v1).neighbours.put(grafo.get(e.v2), e.dist);
-	         //graph.get(e.v2).neighbours.put(graph.get(e.v1), e.dist); // also do this for an undirected graph
+	         grafo.get(e.v1).verticesProximas.put(grafo.get(e.v2), e.dist);
 	      }
 	   }
 

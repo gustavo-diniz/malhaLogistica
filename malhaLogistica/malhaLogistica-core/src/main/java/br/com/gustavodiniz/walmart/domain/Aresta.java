@@ -1,5 +1,10 @@
 package br.com.gustavodiniz.walmart.domain;
 
+/**
+ * Classe Aresta - utiliza no calculo de malha logistica
+ * @author gustavodinizdossantos
+ *
+ */
 public class Aresta {
 
 	public final String v1, v2;

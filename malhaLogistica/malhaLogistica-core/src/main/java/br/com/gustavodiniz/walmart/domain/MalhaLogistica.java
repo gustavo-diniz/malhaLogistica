@@ -1,5 +1,10 @@
 package br.com.gustavodiniz.walmart.domain;
 
+/**
+ * Classe de representação da malha logistica.
+ * @author gustavodinizdossantos
+ *
+ */
 public class MalhaLogistica {
 
 	private String nomeMapa;

@@ -2,13 +2,9 @@ package br.com.gustavodiniz.walmart.service.impl;
 
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.google.gson.Gson;
-
 import br.com.gustavodiniz.walmart.dao.RotaDAO;
 import br.com.gustavodiniz.walmart.domain.Aresta;
 import br.com.gustavodiniz.walmart.domain.Grafo;
@@ -22,7 +18,7 @@ import br.com.gustavodiniz.walmart.service.CalculoRotasService;
 import br.com.gustavodiniz.walmart.service.RotasService;
 
 @Service
-@Transactional
+@Transactional(readOnly=false)
 public class RotasServiceImpl implements RotasService {
 
 	@Autowired
@@ -32,15 +28,33 @@ public class RotasServiceImpl implements RotasService {
 	private CalculoRotasService calculoRotasService;
 	
 	@Override
-	public ResponseCodes incluirRota(String mapa, String origem, String destino, Integer distancia) {
+	public ResponseCodes incluirMalhaLogistica(String mapa, String origem, String destino, Integer distancia) {
+		ResponseCodes responseCodes = new ResponseCodes();
 		
+		if(!validaCamposInclusaoMalhaLogistica(mapa, origem, destino, distancia, responseCodes)){
+			return responseCodes;
+		
+		}else{
+			persisteMalhaLogistica(mapa, origem, destino, distancia, responseCodes);
+			return responseCodes;
+		}
+	}
+
+	/**
+	 * Efetua a persistencia da malha logistica.
+	 * @param mapa
+	 * @param origem
+	 * @param destino
+	 * @param distancia
+	 * @param responseCodes
+	 */
+	private void persisteMalhaLogistica(String mapa, String origem, String destino, Integer distancia, ResponseCodes responseCodes) {
 		MalhaLogistica malhaLogistica = new MalhaLogistica();
-		malhaLogistica.setNomeMapa(mapa);
-		malhaLogistica.setPontoOrigem(origem);
-		malhaLogistica.setPontoDestino(destino);
+		malhaLogistica.setNomeMapa(mapa.toUpperCase());
+		malhaLogistica.setPontoOrigem(origem.toUpperCase());
+		malhaLogistica.setPontoDestino(destino.toUpperCase());
 		malhaLogistica.setDistancia(distancia);
 		
-		ResponseCodes responseCodes = new ResponseCodes();
 		try{  
 			rotaDAO.incluirMalhaLogistica(malhaLogistica);
 			responseCodes.setRetornoMensagem("Registro incluído com sucesso !");
@@ -48,23 +62,67 @@ public class RotasServiceImpl implements RotasService {
 		}catch(Exception e){
 			responseCodes.setRetornoMensagem("Erro ao incluir registro !");
 		}
-		
-		return responseCodes;
-		
 	}
 
+	/**
+	 * Valida os campos de malha logistica, e caso encontre incosistencias
+	 * , informa a mensagem no objeto responseCodes
+	 * @param mapa
+	 * @param origem
+	 * @param destino
+	 * @param distancia
+	 * @param responseCodes
+	 * @return
+	 * @author gustavodinizdossantos
+	 */
+	private boolean validaCamposInclusaoMalhaLogistica(String mapa, String origem, String destino, Integer distancia, ResponseCodes responseCodes) {
+		if(mapa == null || mapa.equals("")){
+			responseCodes.setRetornoMensagem("informe o nome do mapa ! (ex: mapa=SP) ");
+			return false;
+		
+		}if(mapa.length() > 60){
+			responseCodes.setRetornoMensagem("Tamanho do nome do mapa excede o limite de 60 caracteres ! ");
+			return false;
+		
+		}else if(origem == null || origem.equals("")){
+			responseCodes.setRetornoMensagem("informe a origem ! (ex: origem=pontoA)");
+			return false;
+		
+		}else if(origem.length() > 60){
+			responseCodes.setRetornoMensagem("Tamanho da origem excede o limite de 60 caracteres ! ");
+			return false;
+		
+		}else if(destino ==  null || destino.equals("")){
+			responseCodes.setRetornoMensagem("Informe o destino ! (ex: destino=pontoF)");
+			return false;
+		
+		}else if(destino.length() > 60){
+			responseCodes.setRetornoMensagem("Tamanho do destino excede o limite de 60 caracteres ! ");
+			return false;
+		
+		}else if(distancia == null || distancia < 0){
+			responseCodes.setRetornoMensagem("Informe a distancia correta ! (ex: distancia=30 )");
+			return false;
+		
+		}else if(rotaDAO.listarMalhasLogisticas(mapa, origem, destino).size() > 0){
+			responseCodes.setRetornoMensagem("Malha logistica informada já existente !");
+			return false;
+		}
+		
+		return true;
+	}
 	
 	@Override
-	public MalhaLogisticaResponse listarMalhasLogisticas() {
+	public MalhaLogisticaResponse listarMalhasLogisticas(String mapa) {
 		MalhaLogisticaResponse malhaResponse = new MalhaLogisticaResponse();
 		try{
-			List<MalhaLogistica> listaMalhas = rotaDAO.listarMalhasLogisticas();
-
-			if(listaMalhas.size() == 0){
-				malhaResponse.setMensagem("Nenhum registro encontrado !");
-			}else{
-				malhaResponse.setMalhasLogisticas(listaMalhas);
+			if(mapa == null){
+				malhaResponse.setMensagem("Informe o mapa para listar as malhas logisticas !");
+				return malhaResponse;
 			}
+			
+			efetuaConsultaMalhaLogistica(mapa, malhaResponse);
+			
 		}catch(Exception ex){
 			malhaResponse.setMensagem("Erro ao listar Malhas Logisticas !");
 		}
@@ -72,33 +130,117 @@ public class RotasServiceImpl implements RotasService {
 		return malhaResponse;
 	}
 
+	/**
+	 * Efetua a consulta de malha logistica de acordo com o mapa pesquisado,
+	 * caso encontre incosistencias, persiste o objeto malhaResponse com a mensagem, ou 
+	 * lista de malhas encontradas.
+	 * 
+	 * @param mapa
+	 * @param malhaResponse
+	 */
+	private void efetuaConsultaMalhaLogistica(String mapa, MalhaLogisticaResponse malhaResponse) {
+		List<MalhaLogistica> listaMalhas = rotaDAO.listarMalhasLogisticas(mapa);
+
+		if(listaMalhas.size() == 0){
+			malhaResponse.setMensagem("Nenhum registro encontrado !");
+		}else{
+			malhaResponse.setMalhasLogisticas(listaMalhas);
+		}
+	}
 
 	@Override
-	public RotasResponse calcularMelhorCaminho(String origem, String destino, Double autonomiaVeiculo, Double vlLitroConbustivel) {
-		
+	public RotasResponse calcularMelhorCaminhoRota(String mapa, String origem, String destino, Double autonomiaVeiculo, Double vlLitroConbustivel) {
 		RotasResponse rotasResponse = new RotasResponse();
 		
-		//1- listar rotas disponiveis e inicialiar valores no objeto Arestas
-		List<MalhaLogistica> ListaMalhaLogistica = rotaDAO.listarMalhasLogisticas();
-		Aresta[] arestas = new Aresta[ListaMalhaLogistica.size()];
-		for(int i=0; i<ListaMalhaLogistica.size(); i++){
-			arestas[i] = new Aresta(ListaMalhaLogistica.get(i).getPontoOrigem(), 
-								    ListaMalhaLogistica.get(i).getPontoDestino(), 
-								    ListaMalhaLogistica.get(i).getDistancia());
-		}	
+		if(!validaCamposCalculoDeRota(mapa, origem, destino, autonomiaVeiculo, vlLitroConbustivel, rotasResponse)){
+			return rotasResponse;
 		
-		//2 - incluir valores no grafo abaixo
-		Grafo grafo = new Grafo(arestas);
+		}else{
+			Aresta[] arestas = inicializaArestasComMapaPesquisado(mapa);
+			
+			if(arestas.length == 0){
+				rotasResponse.setMensagem("Não foram localizados rotas disponíveis para este mapa: "+mapa);
+			}else{
+				Grafo grafo = new Grafo(arestas);
+				Map<String, Vertice> listMap = calculoRotasService.calcularPossibilidadesDeRota(origem, grafo.getGrafo());
+				
+				if(listMap == null){
+					rotasResponse.setMensagem("Rota não localizada a partir da origem: "+origem);
+					return rotasResponse;
+				}else{
+					rotasResponse = efetuaCalculoDeRota(origem, destino, autonomiaVeiculo, vlLitroConbustivel, listMap);
+				}
+			}
+		}
+		return rotasResponse;
+	}
+
+	/**
+	 * Valida os campos do calculo de rotas, caso encontre inconsistências, o objeto
+	 * rotasResponse sera persistido com a mensagem da inconsistência localizada.
+	 * @param mapa
+	 * @param origem
+	 * @param destino
+	 * @param autonomiaVeiculo
+	 * @param vlLitroConbustivel
+	 * @param rotasResponse
+	 * @return
+	 */
+	private boolean validaCamposCalculoDeRota(String mapa, String origem, String destino, Double autonomiaVeiculo,
+			Double vlLitroConbustivel, RotasResponse rotasResponse) {
 		
-		//3 - inicia o calculo de rotas
-		Map<String, Vertice> listMap = calculoRotasService.calcularPossibilidadesDeRota(origem, grafo.getGrafo());
+		if(mapa == null || mapa.equals("")){
+			rotasResponse.setMensagem("informe o nome do mapa ! (ex: mapa=SP) ");
+			return false;
+			
+		}if(mapa.length() > 60){
+			rotasResponse.setMensagem("Tamanho do nome do mapa excede o limite de 60 caracteres ! ");
+			return false;
+			
+		}else if(origem == null || origem.equals("")){
+			rotasResponse.setMensagem("informe a origem ! (ex: origem=pontoA)");
+			return false;
+			
+		}else if(origem.length() > 60){
+			rotasResponse.setMensagem("Tamanho da origem excede o limite de 60 caracteres ! ");
+			return false;
+			
+		}else if(destino ==  null || destino.equals("")){
+			rotasResponse.setMensagem("Informe o destino ! (ex: destino=pontoF)");
+			return false;
+			
+		}else if(destino.length() > 60){
+			rotasResponse.setMensagem("Tamanho do destino excede o limite de 60 caracteres ! ");
+			return false;
+			
+		}else if(autonomiaVeiculo == null || autonomiaVeiculo <= 0){
+			rotasResponse.setMensagem("Informe a autonomia correta do veículo ! (ex: autonomia = 5.2)");
+			return false;
+			
+		}else if(vlLitroConbustivel == null || vlLitroConbustivel <= 0){
+			rotasResponse.setMensagem("Informe a valor por litro correto do combustível ! (ex: valLitro = 3.2)");
+			return false;
+		}
 		
-		//4 - retorna o objeto com os valores de rota.
-		Rotas rota = calculoRotasService.calculaRota(destino, autonomiaVeiculo, vlLitroConbustivel, listMap);
+		return true;
+	}	
+
+	/**
+	 * Efetua o cálculo de rota e insere no objeto rotasResponse o calculo encontrado.
+	 * @param origem
+	 * @param destino
+	 * @param autonomiaVeiculo
+	 * @param vlLitroConbustivel
+	 * @param listMap
+	 * @return
+	 */
+	private RotasResponse efetuaCalculoDeRota(String origem, String destino, Double autonomiaVeiculo, Double vlLitroConbustivel, Map<String, Vertice> listMap) {
+		
+		RotasResponse rotasResponse = new RotasResponse();
+		Rotas rota = calculoRotasService.calculaRotaComMenorCaminho(destino, autonomiaVeiculo, vlLitroConbustivel, listMap);
 		
 		if(rota == null){
 			rotasResponse.setMensagem("Cálculo de rota não encontrado para a solicitação: "+origem+" - "+destino);
-		
 		}else{
 			rota.setOrigem(origem);
 			rota.setDestino(destino);
@@ -106,7 +248,22 @@ public class RotasServiceImpl implements RotasService {
 		}
 		
 		return rotasResponse;
-		
+	}
+
+	/**
+	 * Insere um vetor de arestas de acordo com a lista de malhas logisticas encontradas
+	 * @param mapa
+	 * @return
+	 */
+	private Aresta[] inicializaArestasComMapaPesquisado(String mapa) {
+		List<MalhaLogistica> ListaMalhaLogistica = rotaDAO.listarMalhasLogisticas(mapa);
+		Aresta[] arestas = new Aresta[ListaMalhaLogistica.size()];
+		for(int i=0; i<ListaMalhaLogistica.size(); i++){
+			arestas[i] = new Aresta(ListaMalhaLogistica.get(i).getPontoOrigem(), 
+								    ListaMalhaLogistica.get(i).getPontoDestino(), 
+								    ListaMalhaLogistica.get(i).getDistancia());
+		}
+		return arestas;
 	}
 	
 	
